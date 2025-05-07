@@ -9,7 +9,6 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -28,5 +27,45 @@ public class Sleep {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    public LocalDateTime getSleepDate() {
+        return sleepDate;
+    }
+
+    public void setSleepDate(LocalDateTime sleepDate) {
+        this.sleepDate = sleepDate;
+    }
+
+    public LocalDateTime getTimeInBed() {
+        return timeInBed;
+    }
+
+    public void setTimeInBed(LocalDateTime timeInBed) {
+        this.timeInBed = timeInBed;
+    }
+
+    public LocalDateTime getTotalTimeInBed() {
+        return totalTimeInBed;
+    }
+
+    public void setTotalTimeInBed(LocalDateTime totalTimeInBed) {
+        this.totalTimeInBed = totalTimeInBed;
+    }
+
+    public Feeling getFeeling() {
+        return feeling;
+    }
+
+    public void setFeeling(Feeling feeling) {
+        this.feeling = feeling;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 }
 
