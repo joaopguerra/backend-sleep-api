@@ -5,6 +5,8 @@ import com.noom.interview.fullstack.sleep.domain.User;
 import com.noom.interview.fullstack.sleep.dto.SleepRequestDTO;
 import com.noom.interview.fullstack.sleep.dto.SleepResponseDTO;
 import com.noom.interview.fullstack.sleep.enums.Feeling;
+import com.noom.interview.fullstack.sleep.exceptions.SleepException;
+import com.noom.interview.fullstack.sleep.exceptions.UserException;
 import com.noom.interview.fullstack.sleep.repositories.SleepRepository;
 import com.noom.interview.fullstack.sleep.repositories.UserRepository;
 import org.springframework.stereotype.Service;
@@ -35,25 +37,23 @@ public class SleepService {
 
     public Optional<SleepResponseDTO> getSleepById(UUID id) {
         Optional<Sleep> sleep = sleepRepository.findById(id);
-        Optional<SleepResponseDTO> sleepDTO = sleep.map(SleepResponseDTO::toSleepDto);
-        if (sleepDTO.isPresent()) {
-            return sleepDTO;
+        if (sleep.isPresent()) {
+            return Optional.of(SleepResponseDTO.toSleepDto(sleep.get()));
         } else {
-            throw new RuntimeException("Sleep not found");
+            throw new SleepException("Sleep not found");
         }
     }
 
     public List<Sleep> getSleepsByUserId(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserException("User not found"));
         return sleepRepository.findByUserId(user.getId());
     }
 
     public Sleep createSleep(SleepRequestDTO sleepRequestDTO) {
         Sleep sleep = new Sleep();
         User user = userRepository.findById(UUID.fromString(sleepRequestDTO.getUserId()))
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+                .orElseThrow(() -> new UserException("User not found"));
         if (user != null) {
             sleep.setUser(user);
             sleep.setSleepDate(sleepRequestDTO.getSleepDate());
