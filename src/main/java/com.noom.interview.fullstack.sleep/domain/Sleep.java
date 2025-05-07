@@ -28,6 +28,10 @@ public class Sleep {
     @JoinColumn(name = "user_id")
     private User user;
 
+    public UUID getId() {
+        return id;
+    }
+
     public LocalDateTime getSleepDate() {
         return sleepDate;
     }
