@@ -5,6 +5,7 @@ import com.noom.interview.fullstack.sleep.domain.User;
 import com.noom.interview.fullstack.sleep.dto.SleepRequestDTO;
 import com.noom.interview.fullstack.sleep.dto.SleepResponseDTO;
 import com.noom.interview.fullstack.sleep.enums.Feeling;
+import com.noom.interview.fullstack.sleep.exceptions.IncorrectDateException;
 import com.noom.interview.fullstack.sleep.exceptions.SleepException;
 import com.noom.interview.fullstack.sleep.exceptions.UserException;
 import com.noom.interview.fullstack.sleep.repositories.SleepRepository;
@@ -51,17 +52,35 @@ public class SleepService {
     }
 
     public Sleep createSleep(SleepRequestDTO sleepRequestDTO) {
+        validateSleepTimes(sleepRequestDTO);
+
         Sleep sleep = new Sleep();
         User user = userRepository.findById(UUID.fromString(sleepRequestDTO.getUserId()))
                 .orElseThrow(() -> new UserException("User not found"));
+
         if (user != null) {
             sleep.setUser(user);
             sleep.setSleepDate(sleepRequestDTO.getSleepDate());
-            sleep.setTimeInBed(sleepRequestDTO.getWakeTime().minus(Duration.between(sleepRequestDTO.getBedTime(), sleepRequestDTO.getWakeTime())));
-            sleep.setTotalTimeInBed(sleepRequestDTO.getBedTime().plus(Duration.between(sleepRequestDTO.getBedTime(), sleepRequestDTO.getWakeTime())));
+
+            Duration duration = Duration.between(sleepRequestDTO.getBedTime(), sleepRequestDTO.getWakeTime());
+            sleep.setTimeInBed(sleepRequestDTO.getWakeTime().minus(duration));
+            sleep.setTotalTimeInBed(sleepRequestDTO.getBedTime().plus(duration));
+
             sleep.setFeeling(Feeling.fromString(sleepRequestDTO.getFeeling()));
             sleepRepository.save(sleep);
         }
+
         return sleep;
     }
+
+    private void validateSleepTimes(SleepRequestDTO sleepRequestDTO) {
+        if (sleepRequestDTO.getBedTime().isBefore(sleepRequestDTO.getSleepDate())) {
+            throw new IncorrectDateException("Bed time cannot be before Sleep date time");
+        }
+
+        if (sleepRequestDTO.getWakeTime().isBefore(sleepRequestDTO.getBedTime())) {
+            throw new IncorrectDateException("Wake time cannot be before bed time");
+        }
+    }
+
 }
