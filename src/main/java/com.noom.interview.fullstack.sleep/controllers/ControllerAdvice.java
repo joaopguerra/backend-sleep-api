@@ -1,5 +1,6 @@
 package com.noom.interview.fullstack.sleep.controllers;
 
+import com.noom.interview.fullstack.sleep.exceptions.IncorrectDateException;
 import com.noom.interview.fullstack.sleep.exceptions.SleepException;
 import com.noom.interview.fullstack.sleep.exceptions.StandardError;
 import com.noom.interview.fullstack.sleep.exceptions.UserException;
@@ -16,6 +17,13 @@ public class ControllerAdvice {
     @ExceptionHandler(SleepException.class)
     public ResponseEntity<StandardError> sleepNotFound(SleepException e, HttpServletRequest request) {
         HttpStatus status = HttpStatus.NOT_FOUND;
+        StandardError error = new StandardError(Instant.now(), status.value(), status.name(), e.getMessage());
+        return ResponseEntity.status(status).body(error);
+    }
+
+    @ExceptionHandler(IncorrectDateException.class)
+    public ResponseEntity<StandardError> incorrectDate(IncorrectDateException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
         StandardError error = new StandardError(Instant.now(), status.value(), status.name(), e.getMessage());
         return ResponseEntity.status(status).body(error);
     }
