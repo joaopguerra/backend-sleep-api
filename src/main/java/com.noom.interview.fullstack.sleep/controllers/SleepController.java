@@ -1,13 +1,11 @@
 package com.noom.interview.fullstack.sleep.controllers;
 
 import com.noom.interview.fullstack.sleep.domain.Sleep;
-import com.noom.interview.fullstack.sleep.enums.Feeling;
+import com.noom.interview.fullstack.sleep.dto.SleepDTO;
+import com.noom.interview.fullstack.sleep.services.SleepService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import com.noom.interview.fullstack.sleep.repositories.SleepRepository;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,28 +14,34 @@ import java.util.UUID;
 @RequestMapping("/v1/api")
 public class SleepController {
 
-    private final SleepRepository repository;
+    private final SleepService sleepService;
 
-    public SleepController(SleepRepository repository) {
-        this.repository = repository;
+    public SleepController(SleepService sleepService) {
+        this.sleepService = sleepService;
     }
 
     @GetMapping("/sleeps")
-    public ResponseEntity<List<Sleep>> getSleeps() {
-        List<Sleep> sleeps = repository.findAll();
-        return ResponseEntity.ok(sleeps);
+    public ResponseEntity<List<SleepDTO>> getSleeps() {
+        List<SleepDTO> sleeps = sleepService.getAllSleeps();
+        return ResponseEntity.status(HttpStatus.OK).body(sleeps);
     }
 
     @GetMapping("/sleeps/{id}")
-    public ResponseEntity<Sleep> getSleepById(@PathVariable UUID id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<SleepDTO> getSleepById(@PathVariable UUID id) {
+        SleepDTO sleep = sleepService.getSleepById(id)
+                .orElseThrow(() -> new RuntimeException("Sleep not found"));
+        return ResponseEntity.status(HttpStatus.OK).body(sleep);
     }
 
     @GetMapping("/sleeps/user/{userId}")
     public ResponseEntity<List<Sleep>> getSleepsByUserId(@PathVariable UUID userId) {
-        List<Sleep> sleeps = repository.findByUserId(userId);
-        return ResponseEntity.ok(sleeps);
+        List<Sleep> sleeps = sleepService.getSleepsByUserId(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(sleeps);
+    }
+
+    @PostMapping("/sleeps")
+    public ResponseEntity<Sleep> createSleep(@RequestBody Sleep sleep) {
+        Sleep createdSleep = sleepService.createSleep(sleep);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdSleep);
     }
 }
