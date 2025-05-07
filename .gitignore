@@ -8,3 +8,12 @@
 .vscode/
 
 *.log
+
+/build/
+/.gradle/
+out/
+*.iml
+*.class
+.gradle/
+!gradle-wrapper.jar
+.idea/
