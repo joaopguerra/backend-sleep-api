@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -36,8 +35,8 @@ public class SleepController {
     }
 
     @GetMapping("/sleeps/user/{userId}")
-    public ResponseEntity<List<Sleep>> getSleepsByUserId(@PathVariable UUID userId) {
-        List<Sleep> sleeps = sleepService.getSleepsByUserId(userId);
+    public ResponseEntity<List<SleepResponseDTO>> getSleepsByUserId(@PathVariable UUID userId) {
+        List<SleepResponseDTO> sleeps = sleepService.getSleepsByUserId(userId);
         return ResponseEntity.status(HttpStatus.OK).body(sleeps);
     }
 

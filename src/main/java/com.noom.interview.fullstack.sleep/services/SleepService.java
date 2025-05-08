@@ -45,10 +45,11 @@ public class SleepService {
         }
     }
 
-    public List<Sleep> getSleepsByUserId(UUID userId) {
+    public List<SleepResponseDTO> getSleepsByUserId(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException("User not found"));
-        return sleepRepository.findByUserId(user.getId());
+        List<Sleep> sleep = sleepRepository.findByUserId(user.getId());
+        return sleep.stream().map(SleepResponseDTO::toSleepDto).collect(Collectors.toList());
     }
 
     public Sleep createSleep(SleepRequestDTO sleepRequestDTO) {
@@ -84,7 +85,7 @@ public class SleepService {
     }
 
     public void deleteSleep(UUID id) {
-        sleepRepository.findById(id)
+        sleepRepository.findByIdAndIsDeleted(id, false)
                 .ifPresentOrElse(sleep -> {
                     sleep.setDeleted(true);
                     sleepRepository.save(sleep);
