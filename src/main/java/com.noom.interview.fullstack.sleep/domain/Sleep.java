@@ -1,16 +1,11 @@
 package com.noom.interview.fullstack.sleep.domain;
 
 import com.noom.interview.fullstack.sleep.enums.Feeling;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 public class Sleep {
 
@@ -29,6 +24,19 @@ public class Sleep {
     private User user;
 
     private boolean isDeleted = false;
+
+    public Sleep() {
+    }
+
+    public Sleep(UUID id, LocalDateTime sleepDate, LocalDateTime timeInBed, LocalDateTime totalTimeInBed, Feeling feeling, User user, boolean isDeleted) {
+        this.id = id;
+        this.sleepDate = sleepDate;
+        this.timeInBed = timeInBed;
+        this.totalTimeInBed = totalTimeInBed;
+        this.feeling = feeling;
+        this.user = user;
+        this.isDeleted = isDeleted;
+    }
 
     public UUID getId() {
         return id;
