@@ -2,6 +2,7 @@ package com.noom.interview.fullstack.sleep.services;
 
 import com.noom.interview.fullstack.sleep.domain.Sleep;
 import com.noom.interview.fullstack.sleep.domain.User;
+import com.noom.interview.fullstack.sleep.dto.SleepAverageResponse;
 import com.noom.interview.fullstack.sleep.dto.SleepRequestDTO;
 import com.noom.interview.fullstack.sleep.dto.SleepResponseDTO;
 import com.noom.interview.fullstack.sleep.enums.Feeling;
@@ -18,7 +19,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -185,6 +188,63 @@ public class SleepServiceTest {
         assertFalse(sleep.isDeleted());
         assertEquals("Sleep not found", ex.getMessage());
         verify(sleepRepository, times(1)).findByIdAndIsDeleted(sleep.getId(), false);
+    }
+
+    @Test
+    @DisplayName("Should test getAverageSleep method")
+    void getAverageSleepTest() {
+        Sleep sleep = createSingleSleep();
+        User user = sleep.getUser();
+        String startDate = "2025-05-01";
+        String endDate = "2025-05-31";
+
+        DateTimeFormatter parser = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDateTime start = LocalDate.parse(startDate, parser).atStartOfDay();
+        LocalDateTime end = LocalDate.parse(endDate, parser).atStartOfDay().plusDays(1).minusSeconds(1);
+
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(sleepRepository.findByUserIdAndSleepDateBetweenAndIsDeleted(user.getId(), start, end, false))
+                .thenReturn(List.of(sleep));
+
+        SleepAverageResponse averageSleep = sleepService.getAverageSleep(startDate, endDate, user.getId());
+
+        assertNotNull(averageSleep);
+        verify(userRepository, times(1)).findById(user.getId());
+        verify(sleepRepository, times(1)).findByUserIdAndSleepDateBetweenAndIsDeleted(user.getId(), start, end, false);
+    }
+
+    @Test
+    @DisplayName("Should test throw user exception when request getAverageSleep")
+    void getAverageSleepTestThrowUserExceptionTest() {
+        UUID userId = UUID.randomUUID();
+        String startDate = "2025-05-01";
+        String endDate = "2025-05-31";
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        UserException ex = assertThrows(UserException.class, () -> {
+            sleepService.getAverageSleep(startDate, endDate, userId);
+        });
+
+        assertEquals("User not found", ex.getMessage());
+        verify(userRepository, times(1)).findById(userId);
+    }
+
+    @Test
+    @DisplayName("Should test throw sleep exception when request getAverageSleep")
+    void getAverageSleepTestThrowSleepExceptionTest() {
+        UUID userId = UUID.randomUUID();
+        String startDate = "2025-05-31";
+        String endDate = "2025-05-01";
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(new User()));
+
+        IncorrectDateException ex = assertThrows(IncorrectDateException.class, () -> {
+            sleepService.getAverageSleep(startDate, endDate, userId);
+        });
+
+        assertEquals("Start date cannot be after end date", ex.getMessage());
+        verify(userRepository, times(1)).findById(userId);
     }
 
     private Sleep createSingleSleep() {

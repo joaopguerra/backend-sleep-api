@@ -8,13 +8,16 @@ import static com.noom.interview.fullstack.sleep.utils.SleepUtils.*;
 @Data
 public class SleepResponseDTO {
 
-    private final String sleepId;
-    private final String sleepDate;
-    private final String timeInBed;
-    private final String totalTimeInBed;
-    private final String feeling;
-    private final String userId;
-    private final boolean isDeleted;
+    private String sleepId;
+    private String sleepDate;
+    private String timeInBed;
+    private String totalTimeInBed;
+    private String feeling;
+    private String userId;
+    private boolean isDeleted;
+
+    public SleepResponseDTO() {
+    }
 
     public SleepResponseDTO(String sleepId, String sleepDate, String timeInBed, String totalTimeInBed, String feeling, String userId, boolean isDeleted) {
         this.sleepId = sleepId;
