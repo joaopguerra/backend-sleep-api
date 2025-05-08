@@ -2,6 +2,7 @@ package com.noom.interview.fullstack.sleep.services;
 
 import com.noom.interview.fullstack.sleep.domain.Sleep;
 import com.noom.interview.fullstack.sleep.domain.User;
+import com.noom.interview.fullstack.sleep.dto.SleepAverageResponse;
 import com.noom.interview.fullstack.sleep.dto.SleepRequestDTO;
 import com.noom.interview.fullstack.sleep.dto.SleepResponseDTO;
 import com.noom.interview.fullstack.sleep.enums.Feeling;
@@ -10,10 +11,15 @@ import com.noom.interview.fullstack.sleep.exceptions.SleepException;
 import com.noom.interview.fullstack.sleep.exceptions.UserException;
 import com.noom.interview.fullstack.sleep.repositories.SleepRepository;
 import com.noom.interview.fullstack.sleep.repositories.UserRepository;
+import com.noom.interview.fullstack.sleep.utils.SleepUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -93,4 +99,47 @@ public class SleepService {
                     throw new SleepException("Sleep not found");
                 });
     }
+
+    public SleepAverageResponse getAverageSleep(String startDate, String endDate, UUID userId) {
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new UserException("User not found"));
+
+        SleepAverageResponse response = new SleepAverageResponse();
+        DateTimeFormatter parser = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        LocalDateTime start = LocalDate.parse(startDate, parser).atStartOfDay();
+        LocalDateTime end = LocalDate.parse(endDate, parser).atStartOfDay().plusDays(1).minusSeconds(1);
+
+        if (start.isAfter(end)) {
+            throw new IncorrectDateException("Start date cannot be after end date");
+        }
+
+        List<Sleep> sleeps = sleepRepository.findByUserIdAndSleepDateBetweenAndIsDeleted(userId, start, end, false);
+
+        double averageSleepTime = sleeps.stream()
+                .mapToDouble(sleep -> {
+                    LocalDateTime timeInBed = sleep.getTimeInBed();
+                    LocalDateTime totalTimeInBed = sleep.getTotalTimeInBed();
+
+                    return Duration.between(timeInBed, totalTimeInBed).toMinutes();
+                })
+                .average()
+                .orElse(0.0);
+
+        long averageMinutes = Math.round(averageSleepTime);
+        LocalDateTime fakeStart = LocalDateTime.of(0, 1, 1, 0, 0);
+        LocalDateTime fakeEnd = fakeStart.plusMinutes(averageMinutes);
+        response.setAverageSleepTime(SleepUtils.formatDuration(fakeStart, fakeEnd));
+
+        Map<String, Long> countingFeelings = sleeps.stream()
+                .collect(Collectors.groupingBy(
+                        sleep -> sleep.getFeeling().getName(),
+                        Collectors.counting()
+                ));
+        response.setFeelingCount(countingFeelings);
+
+        return response;
+    }
+
 }

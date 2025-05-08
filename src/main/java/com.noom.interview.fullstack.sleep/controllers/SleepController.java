@@ -1,6 +1,7 @@
 package com.noom.interview.fullstack.sleep.controllers;
 
 import com.noom.interview.fullstack.sleep.domain.Sleep;
+import com.noom.interview.fullstack.sleep.dto.SleepAverageResponse;
 import com.noom.interview.fullstack.sleep.dto.SleepRequestDTO;
 import com.noom.interview.fullstack.sleep.dto.SleepResponseDTO;
 import com.noom.interview.fullstack.sleep.services.SleepService;
@@ -50,5 +51,13 @@ public class SleepController {
     public ResponseEntity<Sleep> deleteSleep(@PathVariable UUID id) {
         sleepService.deleteSleep(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/sleeps/average/{userId}")
+    public ResponseEntity<SleepAverageResponse> getAverageSleep(@RequestParam String startDate,
+                                                                @RequestParam String endDate,
+                                                                @PathVariable UUID userId) {
+        SleepAverageResponse response = sleepService.getAverageSleep(startDate, endDate, userId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
