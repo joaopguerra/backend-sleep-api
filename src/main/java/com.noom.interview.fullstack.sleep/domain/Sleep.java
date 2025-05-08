@@ -28,6 +28,8 @@ public class Sleep {
     @JoinColumn(name = "user_id")
     private User user;
 
+    private boolean isDeleted = false;
+
     public UUID getId() {
         return id;
     }
@@ -70,6 +72,14 @@ public class Sleep {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }
 
