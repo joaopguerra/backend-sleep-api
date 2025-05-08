@@ -83,4 +83,13 @@ public class SleepService {
         }
     }
 
+    public void deleteSleep(UUID id) {
+        sleepRepository.findById(id)
+                .ifPresentOrElse(sleep -> {
+                    sleep.setDeleted(true);
+                    sleepRepository.save(sleep);
+                }, () -> {
+                    throw new SleepException("Sleep not found");
+                });
+    }
 }

@@ -46,4 +46,10 @@ public class SleepController {
         Sleep createdSleep = sleepService.createSleep(sleepRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSleep);
     }
+
+    @PostMapping("/sleeps/delete/{id}")
+    public ResponseEntity<Sleep> deleteSleep(@PathVariable UUID id) {
+        sleepService.deleteSleep(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }
