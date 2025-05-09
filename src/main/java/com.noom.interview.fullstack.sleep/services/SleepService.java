@@ -12,6 +12,8 @@ import com.noom.interview.fullstack.sleep.exceptions.UserException;
 import com.noom.interview.fullstack.sleep.repositories.SleepRepository;
 import com.noom.interview.fullstack.sleep.repositories.UserRepository;
 import com.noom.interview.fullstack.sleep.utils.SleepUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 @Service
 public class SleepService {
 
+    private static final Logger log = LoggerFactory.getLogger(SleepService.class);
     private final SleepRepository sleepRepository;
     private final UserRepository userRepository;
 
@@ -36,6 +39,7 @@ public class SleepService {
     }
 
     public List<SleepResponseDTO> getAllSleeps() {
+        log.info("Fetching all sleeps");
         return sleepRepository.findAll()
                 .stream()
                 .map(SleepResponseDTO::toSleepDto)
@@ -43,27 +47,37 @@ public class SleepService {
     }
 
     public Optional<SleepResponseDTO> getSleepById(UUID id) {
+        log.info("Fetching sleep by ID: {}", id);
         Optional<Sleep> sleep = sleepRepository.findById(id);
         if (sleep.isPresent()) {
             return Optional.of(SleepResponseDTO.toSleepDto(sleep.get()));
         } else {
+            log.error("Sleep not found with ID: {}", id);
             throw new SleepException("Sleep not found");
         }
     }
 
     public List<SleepResponseDTO> getSleepsByUserId(UUID userId) {
+        log.info("Fetching sleeps for user ID: {}", userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found with ID: {}", userId);
+                    return new UserException("User not found");
+                });
         List<Sleep> sleep = sleepRepository.findByUserId(user.getId());
         return sleep.stream().map(SleepResponseDTO::toSleepDto).collect(Collectors.toList());
     }
 
     public Sleep createSleep(SleepRequestDTO sleepRequestDTO) {
+        log.info("Creating sleep entry for user ID: {}", sleepRequestDTO.getUserId());
         validateSleepTimes(sleepRequestDTO);
 
         Sleep sleep = new Sleep();
         User user = userRepository.findById(UUID.fromString(sleepRequestDTO.getUserId()))
-                .orElseThrow(() -> new UserException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found with ID: {}", sleepRequestDTO.getUserId());
+                    return new UserException("User not found");
+                });
 
         if (user != null) {
             sleep.setUser(user);
@@ -75,35 +89,44 @@ public class SleepService {
 
             sleep.setFeeling(Feeling.fromString(sleepRequestDTO.getFeeling()));
             sleepRepository.save(sleep);
+            log.info("Sleep entry created successfully for user ID: {}", sleepRequestDTO.getUserId());
         }
 
         return sleep;
     }
 
     private void validateSleepTimes(SleepRequestDTO sleepRequestDTO) {
+        log.info("Validating sleep times for user ID: {}", sleepRequestDTO.getUserId());
         if (sleepRequestDTO.getBedTime().isBefore(sleepRequestDTO.getSleepDate())) {
+            log.error("Bed time {} cannot be before sleep date time {}", sleepRequestDTO.getBedTime(), sleepRequestDTO.getSleepDate());
             throw new IncorrectDateException("Bed time cannot be before Sleep date time");
         }
 
         if (sleepRequestDTO.getWakeTime().isBefore(sleepRequestDTO.getBedTime())) {
+            log.error("Wake time {} cannot be before bed time {}", sleepRequestDTO.getWakeTime(), sleepRequestDTO.getBedTime());
             throw new IncorrectDateException("Wake time cannot be before bed time");
         }
     }
 
     public void deleteSleep(UUID id) {
+        log.info("Deleting sleep entry with ID: {}", id);
         sleepRepository.findByIdAndIsDeleted(id, false)
                 .ifPresentOrElse(sleep -> {
                     sleep.setDeleted(true);
                     sleepRepository.save(sleep);
                 }, () -> {
+                    log.error("Sleep not found with ID: {}", id);
                     throw new SleepException("Sleep not found");
                 });
     }
 
     public SleepAverageResponse getAverageSleep(String startDate, String endDate, UUID userId) {
-
+        log.info("Calculating average sleep for user ID: {} from {} to {}", userId, startDate, endDate);
         userRepository.findById(userId)
-                .orElseThrow(() -> new UserException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found with ID: {}", userId);
+                    return new UserException("User not found");
+                });
 
         SleepAverageResponse response = new SleepAverageResponse();
         DateTimeFormatter parser = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -112,6 +135,7 @@ public class SleepService {
         LocalDateTime end = LocalDate.parse(endDate, parser).atStartOfDay().plusDays(1).minusSeconds(1);
 
         if (start.isAfter(end)) {
+            log.error("Start date {} cannot be after end date {}", start, end);
             throw new IncorrectDateException("Start date cannot be after end date");
         }
 
